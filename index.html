@@ -69,6 +69,48 @@
       font-weight: bold;
       text-align: center;
     }
+    
+    @media (max-width: 700px) {
+
+  /* Container untereinander statt nebeneinander */
+  #container {
+    flex-direction: column;
+  }
+
+  /* Controls nehmen volle Breite ein */
+  #controls {
+    width: 100%;
+    flex: none;
+  }
+
+  /* Canvas ebenfalls volle Breite */
+  #canvas-container {
+    width: 100%;
+    flex: none;
+  }
+
+  /* Größere Touch-Ziele */
+  button {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  textarea {
+    height: 100px;
+  }
+
+  /* Mehr Abstand zwischen Elementen */
+  label {
+    margin-top: 12px;
+  }
+}
   </style>
 </head>
 
