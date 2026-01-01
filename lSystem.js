@@ -4,7 +4,7 @@
 
 const FRACTALS = {
     koch: {
-      name: "Kochkurve",
+      name: "Koch Kurve",
       axiom: "F",
       rules: { F: "F+F--F+F" },
       angle: 60,
@@ -14,7 +14,7 @@ const FRACTALS = {
     },
   
     dragon: {
-      name: "Dragon Curve",
+      name: "Drachen Kurve",
       axiom: "FX",
       rules: {
         X: "X+YF",
@@ -27,7 +27,7 @@ const FRACTALS = {
     },
   
     hilbert: {
-      name: "Hilbert-Kurve",
+      name: "Hilbert Kurve",
       axiom: "A",
       rules: {
         A: "+BF-AFA-FB+",
@@ -64,6 +64,18 @@ const FRACTALS = {
         translateStartingPoint: { x: 0, y: 1},
       },
 
+    sierpinskiArrow: {
+        name: "Sierpinski Arrowhead",
+        axiom: "A",
+        rules: { 
+          A: "B-A-B", 
+          B: "A+B+A" },
+        angle: 60,
+        length: 10,
+        startAngle: 0,
+        translateStartingPoint: { x: 0, y: 0.5},
+    },
+
       peano: {
         name: "Peano Kurve",
         axiom: "X",
@@ -76,6 +88,29 @@ const FRACTALS = {
         startAngle: 0,
         translateStartingPoint: { x: 0, y: 0},
       },
+
+      gosper: {
+        name: "Gosper Kurve",
+        axiom: "A",
+        rules: {
+          A: "A-B--B+A++AA+B-",
+          B: "+A-BB--B-A++A+B"
+        },
+        angle: 60,
+        length: 10,
+        startAngle: 0,
+        translateStartingPoint: { x: 0.5, y: 1},
+      },
+
+      levy: {
+        name: "Levy C Kurve",
+        axiom: "F",
+        rules: { F: "+F--F+" },
+        angle: 45,
+        length: 10,
+        startAngle: 0,
+        translateStartingPoint: { x: 0.5, y: 0.5},
+      }
       
   };
   
