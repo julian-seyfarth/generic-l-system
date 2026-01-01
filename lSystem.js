@@ -9,7 +9,8 @@ const FRACTALS = {
       rules: { F: "F+F--F+F" },
       angle: 60,
       length: 5,
-      startAngle: 0
+      startAngle: 0,
+      translateStartingPoint: { x: 0, y: 0.},
     },
   
     dragon: {
@@ -21,7 +22,8 @@ const FRACTALS = {
       },
       angle: 90,
       length: 8,
-      startAngle: 0
+      startAngle: 0,
+      translateStartingPoint: { x: 0.5, y: 0.5},
     },
   
     hilbert: {
@@ -33,7 +35,8 @@ const FRACTALS = {
       },
       angle: 90,
       length: 8,
-      startAngle: 0
+      startAngle: 0,
+      translateStartingPoint: { x: 0, y: 0},
     },
 
     tree: {
@@ -44,7 +47,8 @@ const FRACTALS = {
       },
       angle: 25,
       length: 10,
-      startAngle: -90
+      startAngle: -90,
+      translateStartingPoint: { x: 0.5, y: 1},
     },
 
     sierpinski: {
@@ -56,7 +60,8 @@ const FRACTALS = {
         },
         angle: 120,
         length: 10,
-        startAngle: 0
+        startAngle: 0,
+        translateStartingPoint: { x: 0, y: 1},
       },
 
       peano: {
@@ -68,7 +73,8 @@ const FRACTALS = {
         },
         angle: 90,
         length: 5,
-        startAngle: 0
+        startAngle: 0,
+        translateStartingPoint: { x: 0, y: 0},
       },
       
   };
@@ -78,12 +84,13 @@ const FRACTALS = {
   // =====================
   
   class LSystem {
-    constructor({ axiom, rules, angle, length, startAngle }) {
+    constructor({ axiom, rules, angle, length, startAngle, translateStartingPoint }) {
       this.axiom = axiom;
       this.rules = rules;
       this.angle = angle;
       this.length = length;
       this.startAngle = startAngle || 0;
+      this.translateStartingPoint = translateStartingPoint || { x: 0, y: 0};
   
       this.reset();
     }
@@ -105,7 +112,7 @@ const FRACTALS = {
     draw() {
       background(255);
       resetMatrix();
-      translate(width / 2, height / 2);
+      translate(width * this.translateStartingPoint.x , height * this.translateStartingPoint.y);
       rotate(radians(this.startAngle));
   
       for (let char of this.sentence) {
