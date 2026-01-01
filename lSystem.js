@@ -169,18 +169,20 @@ const FRACTALS = {
   
     select.onchange = e => loadFractal(e.target.value);
   }
+
+  let currentBaseFractal; // das Fraktal, das man als basis für die cutomization genommen hat
   
   function loadFractal(key) {
-    const f = FRACTALS[key];
+    currentBaseFractal = FRACTALS[key];
   
-    system = new LSystem(f);
+    system = new LSystem(currentBaseFractal);
   
-    document.getElementById("axiomInput").value = f.axiom;
-    document.getElementById("rulesInput").value = Object.entries(f.rules)
+    document.getElementById("axiomInput").value = currentBaseFractal.axiom;
+    document.getElementById("rulesInput").value = Object.entries(currentBaseFractal.rules)
       .map(([a, b]) => `${a}=${b}`)
       .join("\n");
-    document.getElementById("angleInput").value = f.angle;
-    document.getElementById("lengthInput").value = f.length;
+    document.getElementById("angleInput").value = currentBaseFractal.angle;
+    document.getElementById("lengthInput").value = currentBaseFractal.length;
   
     updateIteration();
   }
@@ -200,7 +202,8 @@ const FRACTALS = {
       rules: parseRules(document.getElementById("rulesInput").value),
       angle: Number(document.getElementById("angleInput").value),
       length: Number(document.getElementById("lengthInput").value),
-      startAngle: 0
+      startAngle: currentBaseFractal.startAngle,
+      translateStartingPoint: currentBaseFractal.translateStartingPoint,
     });
   
     updateIteration();
