@@ -1,0 +1,103 @@
+body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    #container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+
+    #controls {
+      width: 320px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      margin-top: 5px;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      height: 80px;
+      font-family: monospace;
+    }
+
+    button {
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    #canvas-container {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #iteration {
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    @media (max-width: 700px) {
+
+  /* Container untereinander statt nebeneinander */
+  #container {
+    flex-direction: column;
+  }
+
+  /* Controls nehmen volle Breite ein */
+  #controls {
+    width: 100%;
+    flex: none;
+  }
+
+  /* Canvas ebenfalls volle Breite */
+  #canvas-container {
+    width: 100%;
+    flex: none;
+  }
+
+  /* Größere Touch-Ziele */
+  button {
+    font-size: 16px;
+    padding: 12px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  textarea {
+    height: 100px;
+  }
+
+  /* Mehr Abstand zwischen Elementen */
+  label {
+    margin-top: 12px;
+  }
+}
