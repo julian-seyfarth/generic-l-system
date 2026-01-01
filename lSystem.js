@@ -132,7 +132,8 @@ const FRACTALS = {
   let system;
   
   function setup() {
-    const c = createCanvas(600, 600);
+    const canvasSize = getCanvasSize();
+    const c = createCanvas(canvasSize, canvasSize);
     c.parent("canvas-container");
     angleMode(RADIANS);
     stroke(0);
@@ -212,4 +213,15 @@ const FRACTALS = {
     document.getElementById("iteration").textContent =
       "Iteration: " + system.iteration;
   }
-  
+
+  function getCanvasSize() {
+    const container = document.getElementById("canvas-container");
+    const style = getComputedStyle(container);
+
+    const paddingX =
+      parseFloat(style.paddingLeft) +
+      parseFloat(style.paddingRight);
+
+    return container.clientWidth - paddingX;
+  }
+
