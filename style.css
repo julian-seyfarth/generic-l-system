@@ -83,6 +83,7 @@ button {
     /* Canvas ebenfalls volle Breite */
     #canvas-container {
         width: 100%;
+        height: auto;
         flex: none;    
         box-sizing: border-box;
     }
