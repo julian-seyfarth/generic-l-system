@@ -188,6 +188,7 @@ class LSystem {
     this.sentence = this.axiom;
     this.iteration = 0;
     this._segmentsDirty = true;
+    this._boundsDirty = true;
   }
 
   generate() {
@@ -198,6 +199,7 @@ class LSystem {
     this.sentence = next;
     this.iteration++;
     this._segmentsDirty = true;
+    this._boundsDirty = true;
   }
 
   countSegments() {
@@ -210,6 +212,39 @@ class LSystem {
       this._segmentsDirty = false;
     }
     return this._totalSegments;
+  }
+
+  computeBounds() {
+    if (!this._boundsDirty && this._bounds) return this._bounds;
+    let x = 0, y = 0, a = this.startAngle * (Math.PI / 180);
+    let minX = 0, maxX = 0, minY = 0, maxY = 0;
+    const stack = [];
+    for (let char of this.sentence) {
+      if (char >= 'A' && char <= 'Z') {
+        x += Math.cos(a) * this.length;
+        y += Math.sin(a) * this.length;
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+      } else if (char === '+') { a += this.angle * (Math.PI / 180); }
+      else if (char === '-')   { a -= this.angle * (Math.PI / 180); }
+      else if (char === '[')   { stack.push({x, y, a}); }
+      else if (char === ']')   { ({x, y, a} = stack.pop()); }
+    }
+    this._bounds = {minX, maxX, minY, maxY};
+    this._boundsDirty = false;
+    return this._bounds;
+  }
+
+  buildSymbolMap() {
+    const map = {};
+    let idx = 0;
+    for (let char of this.sentence) {
+      if (char >= 'A' && char <= 'Z' && !(char in map)) {
+        map[char] = idx % paletteColors.length;
+        idx++;
+      }
+    }
+    return map;
   }
 
   draw() {
@@ -230,36 +265,80 @@ class LSystem {
 
     strokeWeight(strokeW);
 
-    // Gradient setup
-    let segmentIndex = 0;
-    const totalSegments = gradientMode ? this.countSegments() : 1;
-    const c1 = gradientMode ? color(gradFrom) : null;
-    const c2 = gradientMode ? color(gradTo) : null;
+    // Pre-compute per-mode data
+    let segIdx = 0;
+    const total = colorMode === 'flat' ? 1 : this.countSegments();
+    const bounds = colorMode === 'position' ? this.computeBounds() : null;
+    const symMap = colorMode === 'per-symbol' ? this.buildSymbolMap() : null;
 
-    if (!gradientMode) {
-      stroke(strokeCol);
-    }
+    // Parallel turtle tracking for position mode
+    let tx = 0, ty = 0, ta = this.startAngle * (Math.PI / 180);
+    const tStack = [];
+
+    if (colorMode === 'flat') stroke(paletteColors[0]);
 
     for (let char of this.sentence) {
       if (char >= "A" && char <= "Z") {
-        if (gradientMode) {
-          const t = totalSegments > 1 ? segmentIndex / (totalSegments - 1) : 0;
-          stroke(lerpColor(c1, c2, t));
-          segmentIndex++;
+        if (colorMode === 'palette-gradient') {
+          stroke(paletteGradient(segIdx / Math.max(total - 1, 1)));
+        } else if (colorMode === 'depth') {
+          stroke(paletteColors[tStack.length % paletteColors.length]);
+        } else if (colorMode === 'position') {
+          stroke(positionColor(tx, ty, bounds));
+        } else if (colorMode === 'per-symbol') {
+          stroke(paletteColors[symMap[char] ?? 0]);
         }
         line(0, 0, this.length, 0);
         translate(this.length, 0);
+        tx += Math.cos(ta) * this.length;
+        ty += Math.sin(ta) * this.length;
+        segIdx++;
       } else if (char === "+") {
         rotate(radians(this.angle));
+        ta += this.angle * (Math.PI / 180);
       } else if (char === "-") {
         rotate(radians(-this.angle));
+        ta -= this.angle * (Math.PI / 180);
       } else if (char === "[") {
         push();
+        tStack.push({tx, ty, ta});
       } else if (char === "]") {
         pop();
+        ({tx, ty, ta} = tStack.pop());
       }
     }
   }
+}
+
+// =====================
+// Color helpers
+// =====================
+
+function paletteGradient(t) {
+  const n = paletteColors.length;
+  if (n === 1) return color(paletteColors[0]);
+  const seg = t * (n - 1);
+  const i = Math.min(Math.floor(seg), n - 2);
+  return lerpColor(color(paletteColors[i]), color(paletteColors[i + 1]), seg - i);
+}
+
+function positionColor(tx, ty, bounds) {
+  const {minX, maxX, minY, maxY} = bounds;
+  let t = 0;
+  if (positionSubMode === 'horizontal') {
+    t = maxX > minX ? (tx - minX) / (maxX - minX) : 0;
+  } else if (positionSubMode === 'vertical') {
+    t = maxY > minY ? (ty - minY) / (maxY - minY) : 0;
+  } else { // radial
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    const maxDist = Math.max(
+      Math.hypot(maxX - cx, maxY - cy),
+      Math.hypot(minX - cx, minY - cy),
+      0.001
+    );
+    t = Math.min(Math.hypot(tx - cx, ty - cy) / maxDist, 1);
+  }
+  return paletteGradient(t);
 }
 
 // =====================
@@ -281,11 +360,10 @@ let touchOnCanvas = false;
 let longPressTimer = null;
 
 // Colors
-let strokeCol = "#000000";
+let paletteColors = ['#000000', '#4a90d9', '#e84393', '#f5a623', '#7ed321'];
 let bgCol = "#ffffff";
-let gradientMode = false;
-let gradFrom = "#0000ff";
-let gradTo = "#ff0000";
+let colorMode = 'flat';
+let positionSubMode = 'horizontal';
 
 // Stroke weight
 let strokeW = 1;
@@ -499,25 +577,51 @@ function setupUI() {
     document.getElementById("animSpeedVal").textContent = speedSlider.value + "ms";
   });
 
-  // Color pickers
-  document.getElementById("strokeColor").addEventListener("input", (e) => {
-    strokeCol = e.target.value;
-  });
+  // Palette swatches
+  for (let i = 0; i < 5; i++) {
+    document.getElementById('pal' + i).addEventListener('input', (e) => {
+      paletteColors[i] = e.target.value;
+      updateSymbolLegend();
+    });
+  }
+
+  // Background color
   document.getElementById("bgColor").addEventListener("input", (e) => {
     bgCol = e.target.value;
   });
-  document.getElementById("gradFrom").addEventListener("input", (e) => {
-    gradFrom = e.target.value;
-  });
-  document.getElementById("gradTo").addEventListener("input", (e) => {
-    gradTo = e.target.value;
+
+  // Color mode dropdown
+  document.getElementById("colorModeSelect").addEventListener("change", function () {
+    colorMode = this.value;
+    document.getElementById("positionControls").classList.toggle("hidden", colorMode !== "position");
+    document.getElementById("symbolLegend").classList.toggle("hidden", colorMode !== "per-symbol");
   });
 
-  // Gradient toggle
-  document.getElementById("gradientMode").addEventListener("change", function () {
-    gradientMode = this.checked;
-    document.getElementById("gradientControls").classList.toggle("hidden", !this.checked);
+  // Position sub-mode dropdown
+  document.getElementById("positionSubMode").addEventListener("change", function () {
+    positionSubMode = this.value;
   });
+}
+
+function updateSymbolLegend() {
+  if (!system) return;
+  const map = system.buildSymbolMap();
+  const legend = document.getElementById('symbolLegend');
+  legend.innerHTML = Object.entries(map).map(([sym, idx]) =>
+    `<span class="sym-entry"><b>${sym}</b><span class="sym-swatch" style="background:${paletteColors[idx]}"></span></span>`
+  ).join('');
+}
+
+function importCoolors() {
+  const raw = document.getElementById('coolorsUrl').value.trim();
+  const match = raw.match(/([0-9a-fA-F]{6}(?:-[0-9a-fA-F]{6})*)/);
+  if (!match) { alert('No valid Coolors palette found in URL.'); return; }
+  const hexes = match[1].split('-').slice(0, 5);
+  hexes.forEach((hex, i) => {
+    paletteColors[i] = '#' + hex.toLowerCase();
+    document.getElementById('pal' + i).value = '#' + hex.toLowerCase();
+  });
+  updateSymbolLegend();
 }
 
 // =====================
@@ -540,6 +644,7 @@ function loadFractal(key) {
   document.getElementById("startAngleInput").value = currentBaseFractal.startAngle;
 
   updateStats();
+  updateSymbolLegend();
 }
 
 function parseRules(text) {
@@ -567,6 +672,7 @@ function applyCustom() {
       : { x: 0, y: 0 },
   });
   updateStats();
+  updateSymbolLegend();
 }
 
 // =====================
@@ -660,13 +766,10 @@ function exportPNG() {
     `Translate origin: x=${system.translateStartingPoint.x}, y=${system.translateStartingPoint.y}`,
     "",
     "-- Colors --",
-    `Stroke:           ${strokeCol}`,
+    `Color mode:       ${colorMode}`,
+    `Palette:          ${paletteColors.join(', ')}`,
     `Background:       ${bgCol}`,
-    `Gradient mode:    ${gradientMode ? "on" : "off"}`,
-    ...(gradientMode ? [
-      `Gradient from:    ${gradFrom}`,
-      `Gradient to:      ${gradTo}`,
-    ] : []),
+    ...(colorMode === 'position' ? [`Position mode:    ${positionSubMode}`] : []),
     "",
     "-- Visual --",
     `Stroke weight:    ${strokeW}px`,

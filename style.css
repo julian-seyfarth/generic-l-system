@@ -283,6 +283,79 @@ input[type="color"]:hover {
 }
 
 /* =====================
+   Palette swatches
+   ===================== */
+
+.palette-row {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.palette-swatch {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  height: 34px;
+}
+
+/* Coolors import */
+.import-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.import-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  padding: 5px 7px;
+}
+
+.import-row button {
+  flex: none;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.coolors-link {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--accent);
+  text-decoration: none;
+  margin-bottom: 2px;
+}
+
+.coolors-link:hover {
+  text-decoration: underline;
+}
+
+/* Per-symbol legend */
+.symbol-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.sym-entry {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sym-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+/* =====================
    Checkbox row
    ===================== */
 

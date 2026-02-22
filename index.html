@@ -80,30 +80,47 @@
 
           <div class="color-row">
             <div class="color-item">
-              <label for="strokeColor">Stroke</label>
-              <input type="color" id="strokeColor" value="#000000">
-            </div>
-            <div class="color-item">
               <label for="bgColor">Background</label>
               <input type="color" id="bgColor" value="#ffffff">
             </div>
           </div>
 
-          <div class="checkbox-row">
-            <input type="checkbox" id="gradientMode">
-            <label for="gradientMode">Gradient stroke</label>
+          <label>Palette</label>
+          <div class="palette-row">
+            <input type="color" class="palette-swatch" id="pal0" value="#000000">
+            <input type="color" class="palette-swatch" id="pal1" value="#4a90d9">
+            <input type="color" class="palette-swatch" id="pal2" value="#e84393">
+            <input type="color" class="palette-swatch" id="pal3" value="#f5a623">
+            <input type="color" class="palette-swatch" id="pal4" value="#7ed321">
           </div>
 
-          <div id="gradientControls" class="color-row hidden">
-            <div class="color-item">
-              <label for="gradFrom">From</label>
-              <input type="color" id="gradFrom" value="#0000ff">
-            </div>
-            <div class="color-item">
-              <label for="gradTo">To</label>
-              <input type="color" id="gradTo" value="#ff0000">
-            </div>
+          <div class="import-row">
+            <input type="text" id="coolorsUrl" placeholder="Paste Coolors URL…" spellcheck="false" autocomplete="off">
+            <button class="btn-secondary" onclick="importCoolors()">Import</button>
           </div>
+          <a href="https://coolors.co/generate" target="_blank" class="coolors-link">Open Coolors ↗</a>
+
+          <div class="field-row" style="margin-top:10px">
+            <label for="colorModeSelect">Color mode</label>
+            <select id="colorModeSelect">
+              <option value="flat">Flat</option>
+              <option value="palette-gradient">Palette gradient</option>
+              <option value="depth">Depth</option>
+              <option value="position">Position</option>
+              <option value="per-symbol">Per symbol</option>
+            </select>
+          </div>
+
+          <div id="positionControls" class="field-row hidden">
+            <label for="positionSubMode">Direction</label>
+            <select id="positionSubMode">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
+              <option value="radial">Radial</option>
+            </select>
+          </div>
+
+          <div id="symbolLegend" class="symbol-legend hidden"></div>
         </div>
 
         <!-- Actions -->
