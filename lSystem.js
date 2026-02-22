@@ -277,6 +277,7 @@ let dragStartX = 0;
 let dragStartY = 0;
 let dragMoved = false;
 let lastTouchDist = 0;
+let touchOnCanvas = false;
 
 // Colors
 let strokeCol = "#000000";
@@ -382,24 +383,31 @@ function mouseDragged() {
 
 // Touch handlers (separate from mouse so both can coexist cleanly)
 function touchStarted() {
-  if (!touches.length) return false;
+  if (!touches.length) return;
   const t = touches[0];
-  if (t.x < 0 || t.x > width || t.y < 0 || t.y > height) return false;
 
   if (touches.length === 1) {
-    isDragging = true;
-    dragStartX = t.x - viewOffsetX;
-    dragStartY = t.y - viewOffsetY;
-    dragMoved = false;
-    lastTouchDist = 0;
-    document.getElementById("canvas-container").classList.add("grabbing");
-  } else if (touches.length === 2) {
+    if (t.x >= 0 && t.x <= width && t.y >= 0 && t.y <= height) {
+      touchOnCanvas = true;
+      isDragging = true;
+      dragStartX = t.x - viewOffsetX;
+      dragStartY = t.y - viewOffsetY;
+      dragMoved = false;
+      lastTouchDist = 0;
+      document.getElementById("canvas-container").classList.add("grabbing");
+      return false; // prevent default only for canvas touches
+    }
+    // Touch outside canvas — let browser handle (page scroll)
+    touchOnCanvas = false;
+  } else if (touches.length === 2 && touchOnCanvas) {
     lastTouchDist = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
+    return false;
   }
-  return false;
 }
 
 function touchMoved() {
+  if (!touchOnCanvas) return; // allow page scroll outside canvas
+
   if (touches.length === 1 && isDragging) {
     viewOffsetX = touches[0].x - dragStartX;
     viewOffsetY = touches[0].y - dragStartY;
@@ -420,13 +428,16 @@ function touchMoved() {
     }
     lastTouchDist = d;
   }
-  return false; // prevent page scroll in all cases
+  return false;
 }
 
 function touchEnded() {
+  if (!touchOnCanvas) return;
+
   if (touches.length === 0) {
     if (isDragging && !dragMoved) nextIteration();
     isDragging = false;
+    touchOnCanvas = false;
     document.getElementById("canvas-container").classList.remove("grabbing");
   } else if (touches.length === 1) {
     // One finger lifted during pinch — restart single-finger pan
@@ -434,7 +445,7 @@ function touchEnded() {
     isDragging = true;
     dragStartX = touches[0].x - viewOffsetX;
     dragStartY = touches[0].y - viewOffsetY;
-    dragMoved = false;
+    dragMoved = true; // prevent accidental iteration trigger after pinch
   }
   return false;
 }
