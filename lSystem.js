@@ -325,15 +325,18 @@ function fitContainerToCanvas(s) {
   const container = document.getElementById("canvas-container");
   const style = getComputedStyle(container);
   const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   container.style.flex = "none";
   container.style.width = (s + paddingX) + "px";
+  container.style.height = (s + paddingY) + "px";
 }
 
 function windowResized() {
   const container = document.getElementById("canvas-container");
-  // Reset to flex so getCanvasSize can read the natural available width
+  // Reset to CSS defaults so getCanvasSize reads the natural available space
   container.style.flex = "1";
   container.style.width = "";
+  container.style.height = "";
   const s = getCanvasSize();
   resizeCanvas(s, s);
   fitContainerToCanvas(s);
