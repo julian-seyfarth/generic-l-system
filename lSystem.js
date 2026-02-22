@@ -439,6 +439,7 @@ function setupUI() {
 let currentBaseFractal;
 
 function loadFractal(key) {
+  resetView();
   currentBaseFractal = FRACTALS[key];
   system = new LSystem(currentBaseFractal);
 
