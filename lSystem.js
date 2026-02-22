@@ -290,6 +290,7 @@ let strokeW = 1;
 // Animation
 let isAnimating = false;
 let animTimeout = null;
+let animStartIteration = 0;
 
 // =====================
 // p5.js setup / draw
@@ -525,6 +526,7 @@ function toggleAnimate() {
     document.getElementById("animBtn").textContent = "▶ Auto";
   } else {
     isAnimating = true;
+    animStartIteration = system.iteration;
     document.getElementById("animBtn").textContent = "⏸ Pause";
     scheduleNext();
   }
@@ -532,12 +534,14 @@ function toggleAnimate() {
 
 function scheduleNext() {
   if (!isAnimating) return;
+  const maxSteps = Number(document.getElementById("animSteps").value);
+  const targetIteration = animStartIteration + maxSteps;
+  if (system.iteration >= targetIteration || system.sentence.length > 200000) {
+    toggleAnimate();
+    return;
+  }
   const delay = Number(document.getElementById("animSpeed").value);
   animTimeout = setTimeout(() => {
-    if (system.sentence.length > 200000) {
-      toggleAnimate();
-      return;
-    }
     nextIteration();
     scheduleNext();
   }, delay);
