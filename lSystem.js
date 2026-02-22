@@ -299,6 +299,7 @@ function setup() {
   const canvasSize = getCanvasSize();
   const c = createCanvas(canvasSize, canvasSize);
   c.parent("canvas-container");
+  fitContainerToCanvas(canvasSize);
   angleMode(RADIANS);
 
   setupUI();
@@ -312,9 +313,29 @@ function draw() {
 function getCanvasSize() {
   const container = document.getElementById("canvas-container");
   const style = getComputedStyle(container);
-  const paddingX =
-    parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-  return container.clientWidth - paddingX;
+  const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  const w = container.clientWidth - paddingX;
+  const h = container.clientHeight - paddingY;
+  return h > 50 ? Math.min(w, h) : w;
+}
+
+function fitContainerToCanvas(s) {
+  const container = document.getElementById("canvas-container");
+  const style = getComputedStyle(container);
+  const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  container.style.flex = "none";
+  container.style.width = (s + paddingX) + "px";
+}
+
+function windowResized() {
+  const container = document.getElementById("canvas-container");
+  // Reset to flex so getCanvasSize can read the natural available width
+  container.style.flex = "1";
+  container.style.width = "";
+  const s = getCanvasSize();
+  resizeCanvas(s, s);
+  fitContainerToCanvas(s);
 }
 
 // =====================

@@ -375,6 +375,8 @@ button:active {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 10px;
+  height: calc(100vh - 90px);
+  overflow: hidden;
   cursor: grab;
   line-height: 0; /* remove inline gap below canvas */
 }
@@ -408,6 +410,8 @@ button:active {
 
   #canvas-container {
     width: 100%;
+    height: auto;
+    overflow: visible;
   }
 
   button {
