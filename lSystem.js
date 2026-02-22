@@ -379,6 +379,10 @@ function mouseDragged() {
   dragMoved = true;
 }
 
+function touchMoved() {
+  if (isDragging) return false; // prevent page scroll while panning canvas
+}
+
 function mouseReleased() {
   if (isDragging && !dragMoved) {
     nextIteration();
