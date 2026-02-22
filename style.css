@@ -335,24 +335,47 @@ input[type="color"]:hover {
 /* Per-symbol legend */
 .symbol-legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 5px;
   margin-top: 6px;
-  font-size: 12px;
 }
 
 .sym-entry {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 7px;
 }
 
-.sym-swatch {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
+.sym-label {
+  font-size: 12px;
+  font-family: "Menlo", "Consolas", "Courier New", monospace;
+  min-width: 14px;
+  font-weight: 700;
+}
+
+.sym-pal-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.sym-pal-btn {
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
-  border: 1px solid var(--border);
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+  transition: border-color var(--transition), transform var(--transition);
+}
+
+.sym-pal-btn:active {
+  transform: scale(0.88);
+}
+
+.sym-pal-btn.selected {
+  border-color: var(--text);
+  box-shadow: inset 0 0 0 1px #fff;
 }
 
 /* =====================

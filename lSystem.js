@@ -235,16 +235,17 @@ class LSystem {
     return this._bounds;
   }
 
-  buildSymbolMap() {
-    const map = {};
-    let idx = 0;
-    for (let char of this.sentence) {
-      if (char >= 'A' && char <= 'Z' && !(char in map)) {
-        map[char] = idx % paletteColors.length;
-        idx++;
+  getAllSymbols() {
+    const symbols = new Set();
+    for (let char of this.axiom) {
+      if (char >= 'A' && char <= 'Z') symbols.add(char);
+    }
+    for (let rhs of Object.values(this.rules)) {
+      for (let char of rhs) {
+        if (char >= 'A' && char <= 'Z') symbols.add(char);
       }
     }
-    return map;
+    return [...symbols].sort();
   }
 
   draw() {
@@ -269,7 +270,7 @@ class LSystem {
     let segIdx = 0;
     const total = colorMode === 'flat' ? 1 : this.countSegments();
     const bounds = colorMode === 'position' ? this.computeBounds() : null;
-    const symMap = colorMode === 'per-symbol' ? this.buildSymbolMap() : null;
+    const symMap = colorMode === 'per-symbol' ? symbolColorMap : null;
 
     // Parallel turtle tracking for position mode
     let tx = 0, ty = 0, ta = this.startAngle * (Math.PI / 180);
@@ -364,6 +365,7 @@ let paletteColors = ['#000000', '#4a90d9', '#e84393', '#f5a623', '#7ed321'];
 let bgCol = "#ffffff";
 let colorMode = 'flat';
 let positionSubMode = 'horizontal';
+let symbolColorMap = {}; // { 'F': 0, 'G': 1, ... } maps symbol → palette index
 
 // Stroke weight
 let strokeW = 1;
@@ -603,13 +605,38 @@ function setupUI() {
   });
 }
 
+function refreshSymbolMap() {
+  if (!system) return;
+  const allSyms = system.getAllSymbols();
+  // Remove stale symbols
+  for (const sym of Object.keys(symbolColorMap)) {
+    if (!allSyms.includes(sym)) delete symbolColorMap[sym];
+  }
+  // Auto-assign palette index to new symbols
+  allSyms.forEach((sym, i) => {
+    if (!(sym in symbolColorMap)) {
+      symbolColorMap[sym] = i % paletteColors.length;
+    }
+  });
+}
+
 function updateSymbolLegend() {
   if (!system) return;
-  const map = system.buildSymbolMap();
+  refreshSymbolMap();
   const legend = document.getElementById('symbolLegend');
-  legend.innerHTML = Object.entries(map).map(([sym, idx]) =>
-    `<span class="sym-entry"><b>${sym}</b><span class="sym-swatch" style="background:${paletteColors[idx]}"></span></span>`
-  ).join('');
+  const allSyms = system.getAllSymbols();
+  legend.innerHTML = allSyms.map(sym => {
+    const btns = paletteColors.map((col, idx) => {
+      const sel = symbolColorMap[sym] === idx ? ' selected' : '';
+      return `<button class="sym-pal-btn${sel}" style="background:${col}" onclick="setSymbolColor('${sym}',${idx})" title="Palette ${idx + 1}"></button>`;
+    }).join('');
+    return `<span class="sym-entry"><b class="sym-label">${sym}</b><span class="sym-pal-btns">${btns}</span></span>`;
+  }).join('');
+}
+
+function setSymbolColor(sym, idx) {
+  symbolColorMap[sym] = idx;
+  updateSymbolLegend();
 }
 
 function importCoolors() {
