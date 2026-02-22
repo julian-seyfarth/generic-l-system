@@ -278,6 +278,7 @@ let dragStartY = 0;
 let dragMoved = false;
 let lastTouchDist = 0;
 let touchOnCanvas = false;
+let longPressTimer = null;
 
 // Colors
 let strokeCol = "#000000";
@@ -395,11 +396,19 @@ function touchStarted() {
       dragMoved = false;
       lastTouchDist = 0;
       document.getElementById("canvas-container").classList.add("grabbing");
-      return false; // prevent default only for canvas touches
+
+      // Long press: fire next iteration after 500 ms if finger hasn't moved
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        if (!dragMoved) nextIteration();
+      }, 500);
+
+      return false;
     }
-    // Touch outside canvas — let browser handle (page scroll)
     touchOnCanvas = false;
   } else if (touches.length === 2 && touchOnCanvas) {
+    // Second finger cancels any pending long press
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     lastTouchDist = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
     return false;
   }
@@ -412,6 +421,8 @@ function touchMoved() {
     viewOffsetX = touches[0].x - dragStartX;
     viewOffsetY = touches[0].y - dragStartY;
     dragMoved = true;
+    // Movement cancels long press
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
   } else if (touches.length === 2) {
     const d = dist(touches[0].x, touches[0].y, touches[1].x, touches[1].y);
     if (lastTouchDist > 0) {
@@ -434,8 +445,10 @@ function touchMoved() {
 function touchEnded() {
   if (!touchOnCanvas) return;
 
+  // Always cancel long press on lift
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+
   if (touches.length === 0) {
-    if (isDragging && !dragMoved) nextIteration();
     isDragging = false;
     touchOnCanvas = false;
     document.getElementById("canvas-container").classList.remove("grabbing");
@@ -445,7 +458,7 @@ function touchEnded() {
     isDragging = true;
     dragStartX = touches[0].x - viewOffsetX;
     dragStartY = touches[0].y - viewOffsetY;
-    dragMoved = true; // prevent accidental iteration trigger after pinch
+    dragMoved = true; // prevent long-press triggering on remaining finger
   }
   return false;
 }
