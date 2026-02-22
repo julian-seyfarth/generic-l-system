@@ -552,5 +552,52 @@ function scheduleNext() {
 // =====================
 
 function exportPNG() {
-  saveCanvas("fractal", "png");
+  const name = prompt("Export filename:", "fractal");
+  if (!name) return;
+
+  saveCanvas(name, "png");
+
+  // Build settings text
+  const rules = document.getElementById("rulesInput").value.trim();
+  const lines = [
+    "L-System Settings",
+    "==================",
+    "",
+    "-- L-System --",
+    `Axiom:            ${document.getElementById("axiomInput").value.trim()}`,
+    `Rules:`,
+    ...rules.split("\n").map(r => `  ${r}`),
+    `Angle:            ${document.getElementById("angleInput").value}°`,
+    `Length:           ${document.getElementById("lengthInput").value}`,
+    `Start angle:      ${document.getElementById("startAngleInput").value}°`,
+    `Translate origin: x=${system.translateStartingPoint.x}, y=${system.translateStartingPoint.y}`,
+    "",
+    "-- Colors --",
+    `Stroke:           ${strokeCol}`,
+    `Background:       ${bgCol}`,
+    `Gradient mode:    ${gradientMode ? "on" : "off"}`,
+    ...(gradientMode ? [
+      `Gradient from:    ${gradFrom}`,
+      `Gradient to:      ${gradTo}`,
+    ] : []),
+    "",
+    "-- Visual --",
+    `Stroke weight:    ${strokeW}px`,
+    "",
+    "-- State --",
+    `Iteration:        ${system.iteration}`,
+    `Sentence length:  ${system.sentence.length.toLocaleString()} chars`,
+    "",
+    "-- Animation --",
+    `Delay:            ${document.getElementById("animSpeed").value}ms`,
+    `Max steps:        ${document.getElementById("animSteps").value}`,
+  ];
+
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name + "_settings.txt";
+  a.click();
+  URL.revokeObjectURL(url);
 }
