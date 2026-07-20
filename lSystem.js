@@ -779,6 +779,125 @@ function scheduleNext() {
 // Export
 // =====================
 
+function importSettings() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".txt,text/plain";
+  input.onchange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        applySettingsText(evt.target.result);
+      } catch (err) {
+        alert("Failed to import settings: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function parseSettingsText(text) {
+  const out = {};
+  const rules = [];
+  let inRules = false;
+
+  for (const raw of text.split(/\r?\n/)) {
+    if (inRules) {
+      // Rule lines are indented and contain '='.
+      if (/^\s{2,}\S/.test(raw) && raw.includes("=")) {
+        rules.push(raw.trim());
+        continue;
+      }
+      inRules = false;
+      // fall through to normal parsing for this line
+    }
+
+    const line = raw.trim();
+    if (!line || /^={2,}$/.test(line) || line.startsWith("--")) continue;
+
+    if (/^Rules:\s*$/i.test(line)) { inRules = true; continue; }
+
+    const idx = line.indexOf(":");
+    if (idx < 0) continue;
+    const key = line.slice(0, idx).trim().toLowerCase();
+    const val = line.slice(idx + 1).trim();
+    out[key] = val;
+  }
+
+  if (rules.length) out.rules = rules;
+  return out;
+}
+
+function applySettingsText(text) {
+  const p = parseSettingsText(text);
+  const stripUnit = (v, u) => String(v).replace(u, "").trim();
+  const setInput = (id, v) => { if (v !== undefined) document.getElementById(id).value = v; };
+
+  if (p.axiom !== undefined) setInput("axiomInput", p.axiom);
+  if (p.rules) document.getElementById("rulesInput").value = p.rules.join("\n");
+  if (p.angle !== undefined) setInput("angleInput", stripUnit(p.angle, "°"));
+  if (p.length !== undefined) setInput("lengthInput", p.length);
+  if (p["start angle"] !== undefined) setInput("startAngleInput", stripUnit(p["start angle"], "°"));
+
+  // "x=0.5, y=0.5"
+  let translate = { x: 0, y: 0 };
+  if (p["translate origin"]) {
+    const m = p["translate origin"].match(/x\s*=\s*(-?[\d.]+)\s*,\s*y\s*=\s*(-?[\d.]+)/i);
+    if (m) translate = { x: Number(m[1]), y: Number(m[2]) };
+  }
+
+  if (p["color mode"]) {
+    colorMode = p["color mode"];
+    document.getElementById("colorModeSelect").value = colorMode;
+    document.getElementById("positionControls").classList.toggle("hidden", colorMode !== "position");
+    document.getElementById("symbolLegend").classList.toggle("hidden", colorMode !== "per-symbol");
+  }
+  if (p.palette) {
+    const cols = p.palette.split(",").map((s) => s.trim()).filter(Boolean);
+    for (let i = 0; i < Math.min(cols.length, 5); i++) {
+      paletteColors[i] = cols[i];
+      document.getElementById("pal" + i).value = cols[i];
+    }
+  }
+  if (p.background) {
+    bgCol = p.background;
+    document.getElementById("bgColor").value = bgCol;
+  }
+  if (p["position mode"]) {
+    positionSubMode = p["position mode"];
+    document.getElementById("positionSubMode").value = positionSubMode;
+  }
+  if (p["stroke weight"] !== undefined) {
+    strokeW = Number(stripUnit(p["stroke weight"], "px"));
+    document.getElementById("strokeWeight").value = strokeW;
+    document.getElementById("strokeWeightVal").textContent = strokeW + "px";
+  }
+  if (p.delay !== undefined) {
+    const d = Number(stripUnit(p.delay, "ms"));
+    document.getElementById("animSpeed").value = d;
+    document.getElementById("animSpeedVal").textContent = d + "ms";
+  }
+  if (p["max steps"] !== undefined) setInput("animSteps", p["max steps"]);
+
+  // Rebuild the system from the freshly populated inputs.
+  currentBaseFractal = { translateStartingPoint: translate };
+  applyCustom();
+
+  // Replay iterations up to the saved count (with the same safety cap as nextIteration).
+  const targetIter = p.iteration !== undefined ? Number(p.iteration) : 0;
+  for (let i = 0; i < targetIter; i++) {
+    if (system.sentence.length > 500000) break;
+    system.generate();
+  }
+
+  resetView();
+  updateStats();
+  updateSymbolLegend();
+}
+
 function exportPNG() {
   const name = prompt("Export filename:", "fractal");
   if (!name) return;
