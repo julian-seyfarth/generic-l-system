@@ -883,15 +883,9 @@ function applySettingsText(text) {
   if (p["max steps"] !== undefined) setInput("animSteps", p["max steps"]);
 
   // Rebuild the system from the freshly populated inputs.
+  // Iteration count is intentionally NOT restored — user steps through manually.
   currentBaseFractal = { translateStartingPoint: translate };
   applyCustom();
-
-  // Replay iterations up to the saved count (with the same safety cap as nextIteration).
-  const targetIter = p.iteration !== undefined ? Number(p.iteration) : 0;
-  for (let i = 0; i < targetIter; i++) {
-    if (system.sentence.length > 500000) break;
-    system.generate();
-  }
 
   resetView();
   updateStats();
