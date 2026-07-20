@@ -248,23 +248,31 @@ class LSystem {
     return [...symbols].sort();
   }
 
-  draw() {
-    background(bgCol);
-    resetMatrix();
+  draw(ctx = window, exportScale = 1) {
+    // Logical (display) dimensions — kept constant so fractal composition
+    // matches the on-screen view regardless of exportScale.
+    const w = width;
+    const h = height;
+
+    ctx.background(bgCol);
+    ctx.resetMatrix();
+
+    // Uniform scale applied first — used for high-res export.
+    if (exportScale !== 1) ctx.scale(exportScale);
 
     // Viewport transform: pan + zoom toward canvas center
-    translate(width / 2 + viewOffsetX, height / 2 + viewOffsetY);
-    scale(viewScale);
-    translate(-width / 2, -height / 2);
+    ctx.translate(w / 2 + viewOffsetX, h / 2 + viewOffsetY);
+    ctx.scale(viewScale);
+    ctx.translate(-w / 2, -h / 2);
 
     // Fractal positioning
-    translate(
-      width * this.translateStartingPoint.x,
-      height * this.translateStartingPoint.y
+    ctx.translate(
+      w * this.translateStartingPoint.x,
+      h * this.translateStartingPoint.y
     );
-    rotate(radians(this.startAngle));
+    ctx.rotate(radians(this.startAngle));
 
-    strokeWeight(strokeW);
+    ctx.strokeWeight(strokeW);
 
     // Pre-compute per-mode data
     let segIdx = 0;
@@ -276,35 +284,35 @@ class LSystem {
     let tx = 0, ty = 0, ta = this.startAngle * (Math.PI / 180);
     const tStack = [];
 
-    if (colorMode === 'flat') stroke(paletteColors[0]);
+    if (colorMode === 'flat') ctx.stroke(paletteColors[0]);
 
     for (let char of this.sentence) {
       if (char >= "A" && char <= "Z") {
         if (colorMode === 'palette-gradient') {
-          stroke(paletteGradient(segIdx / Math.max(total - 1, 1)));
+          ctx.stroke(paletteGradient(segIdx / Math.max(total - 1, 1)));
         } else if (colorMode === 'depth') {
-          stroke(paletteColors[tStack.length % paletteColors.length]);
+          ctx.stroke(paletteColors[tStack.length % paletteColors.length]);
         } else if (colorMode === 'position') {
-          stroke(positionColor(tx, ty, bounds));
+          ctx.stroke(positionColor(tx, ty, bounds));
         } else if (colorMode === 'per-symbol') {
-          stroke(paletteColors[symMap[char] ?? 0]);
+          ctx.stroke(paletteColors[symMap[char] ?? 0]);
         }
-        line(0, 0, this.length, 0);
-        translate(this.length, 0);
+        ctx.line(0, 0, this.length, 0);
+        ctx.translate(this.length, 0);
         tx += Math.cos(ta) * this.length;
         ty += Math.sin(ta) * this.length;
         segIdx++;
       } else if (char === "+") {
-        rotate(radians(this.angle));
+        ctx.rotate(radians(this.angle));
         ta += this.angle * (Math.PI / 180);
       } else if (char === "-") {
-        rotate(radians(-this.angle));
+        ctx.rotate(radians(-this.angle));
         ta -= this.angle * (Math.PI / 180);
       } else if (char === "[") {
-        push();
+        ctx.push();
         tStack.push({tx, ty, ta});
       } else if (char === "]") {
-        pop();
+        ctx.pop();
         ({tx, ty, ta} = tStack.pop());
       }
     }
@@ -775,7 +783,40 @@ function exportPNG() {
   const name = prompt("Export filename:", "fractal");
   if (!name) return;
 
-  saveCanvas(name, "png");
+  const multiplier = Number(document.getElementById("exportScale").value) || 1;
+  const outW = Math.round(width * multiplier);
+  const outH = Math.round(height * multiplier);
+
+  // Warn on very large outputs — some browsers cap canvas pixel budgets.
+  if (outW * outH > 268435456) {
+    const proceed = confirm(
+      `Output will be ${outW}×${outH} px (~${(outW * outH / 1e6).toFixed(0)} MP). ` +
+      `This may fail or be slow. Continue?`
+    );
+    if (!proceed) return;
+  }
+
+  const btn = document.getElementById("exportBtn");
+  const prevLabel = btn ? btn.textContent : null;
+  if (btn) { btn.textContent = "Rendering…"; btn.disabled = true; }
+
+  // Defer to next frame so the button state actually paints before the
+  // synchronous render blocks the main thread.
+  setTimeout(() => {
+    try {
+      if (multiplier === 1) {
+        saveCanvas(name, "png");
+      } else {
+        const pg = createGraphics(outW, outH);
+        pg.smooth();
+        system.draw(pg, multiplier);
+        saveCanvas(pg, name, "png");
+        pg.remove();
+      }
+    } finally {
+      if (btn) { btn.textContent = prevLabel; btn.disabled = false; }
+    }
+  }, 20);
 
   // Build settings text
   const rules = document.getElementById("rulesInput").value.trim();
@@ -800,6 +841,7 @@ function exportPNG() {
     "",
     "-- Visual --",
     `Stroke weight:    ${strokeW}px`,
+    `Export size:      ${outW}×${outH} px (${multiplier}×)`,
     "",
     "-- State --",
     `Iteration:        ${system.iteration}`,

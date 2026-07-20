@@ -139,7 +139,18 @@
 
           <div class="btn-row">
             <button class="btn-secondary" onclick="resetView()">Reset View</button>
-            <button class="btn-secondary" onclick="exportPNG()">Export PNG</button>
+            <button id="exportBtn" class="btn-secondary" onclick="exportPNG()">Export PNG</button>
+          </div>
+
+          <div class="field-row">
+            <label for="exportScale">Export resolution</label>
+            <select id="exportScale">
+              <option value="1">1× (screen)</option>
+              <option value="2">2×</option>
+              <option value="4" selected>4×</option>
+              <option value="8">8×</option>
+              <option value="16">16× (huge)</option>
+            </select>
           </div>
 
           <div class="slider-group">
